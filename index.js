@@ -17,54 +17,33 @@ app.use(cors());
 
 morgan.token('body', (req) => JSON.stringify(req.body));
 
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body', {
-  stream: console.log(),
-}));
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body', {stream: console.log()}));
 
 
-let persons = [
-  {
-    "name": "Arto Hellas",
-    "number": "040-123456",
-    "id": 1
-  },
-  {
-    "name": "Ada Lovelace",
-    "number": "39-44-5323523",
-    "id": 2
-  },
-  {
-    "name": "Dan Abramov",
-    "number": "12-43-234345",
-    "id": 3
-  },
-  {
-    "name": "Mary Poppendieck",
-    "number": "39-23-6423122",
-    "id": 4
-  }
-];
-
+app.get('/info', (req, res) => {
+  Person.find({})
+  .then(people => res.send(`
+    Phonebook has info for ${people.length} people<br>
+    ${new Date(Date.now())}
+  `));
+});
 
 app.get('/api/persons', (req, res) => {
   Person.find({})
-    .then(people => res.json(people))
+    .then(people => res.json(people));
+});
+
+app.get('/api/persons/:id', (req, res, next) => {
+  Person.findById(req.params.id)
+    .then(person => {
+      person
+        ? res.json(person)
+        : res.status(404).end();
+    })
     .catch(error => next(error));
 });
 
-app.get('/info', (req, res) => {
-  res.send(`
-    Phonebook has info for ${persons.length} people<br>
-    ${new Date(Date.now())}
-  `);
-});
-
-app.get('/api/persons/:id', (req, res) => {
-  const person = persons.find((person) => person.id === Number(req.params.id));
-  person ? res.json(person) : res.status(404).end();
-});
-
-app.delete('/api/persons/:id', (req, res) => {
+app.delete('/api/persons/:id', (req, res, next) => {
   Person.findByIdAndRemove(req.params.id)
     .then(result => res.status(204).end())
     .catch(error => next(error));
@@ -91,11 +70,10 @@ app.post('/api/persons', (req, res) => {
   });
 
   person.save()
-    .then(person => res.json(person))
-    .catch(error => next(error));
+    .then(person => res.json(person));
 });
 
-app.put('/api/persons/:id', (req, res) => {
+app.put('/api/persons/:id', (req, res, next) => {
   const {body} = req;
 
   const person = {
@@ -117,7 +95,7 @@ app.use(unknownEndpoint)
 const errorHandler = (error, req, res, next) => {
   console.error(error.message);
 
-  if(error.name === 'CastError')
+  if(error.name === 'CastError' && error.kind == 'ObjectId')
     return res.status(400).send({error: 'malformatted id'});
 
   next(error);
