@@ -49,7 +49,7 @@ app.delete('/api/persons/:id', (req, res, next) => {
     .catch(error => next(error));
 });
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
   const {body} = req;
 
   if(!body.name) {
@@ -70,7 +70,8 @@ app.post('/api/persons', (req, res) => {
   });
 
   person.save()
-    .then(person => res.json(person));
+    .then(person => res.json(person))
+    .catch(error => next(error));
 });
 
 app.put('/api/persons/:id', (req, res, next) => {
@@ -95,8 +96,11 @@ app.use(unknownEndpoint)
 const errorHandler = (error, req, res, next) => {
   console.error(error.message);
 
-  if(error.name === 'CastError' && error.kind == 'ObjectId')
+  if(error.name === 'CastError' && error.kind == 'ObjectId') {
     return res.status(400).send({error: 'malformatted id'});
+  } else if(error.name === 'ValidationError') {
+    return res.status(400).json({error: error.message});
+  }
 
   next(error);
 }
