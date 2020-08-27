@@ -1,4 +1,6 @@
-require('dotenv').config()
+/* globals process */
+
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
@@ -22,10 +24,10 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
 
 app.get('/info', (req, res) => {
   Person.find({})
-  .then(people => res.send(`
-    Phonebook has info for ${people.length} people<br>
-    ${new Date(Date.now())}
-  `));
+    .then(people => res.send(`
+      Phonebook has info for ${people.length} people<br>
+      ${new Date(Date.now())}
+    `));
 });
 
 app.get('/api/persons', (req, res) => {
@@ -91,19 +93,19 @@ app.put('/api/persons/:id', (req, res, next) => {
 const unknownEndpoint = (request, response) => response.status(404).send({error: 'unknown endpoint'});
 
 // handler of requests with unknown endpoint
-app.use(unknownEndpoint)
+app.use(unknownEndpoint);
 
 const errorHandler = (error, req, res, next) => {
   console.error(error.message);
 
-  if(error.name === 'CastError' && error.kind == 'ObjectId') {
+  if(error.name === 'CastError' && error.kind === 'ObjectId') {
     return res.status(400).send({error: 'malformatted id'});
   } else if(error.name === 'ValidationError') {
     return res.status(400).json({error: error.message});
   }
 
   next(error);
-}
+};
 
 // handler of errors
 app.use(errorHandler);
